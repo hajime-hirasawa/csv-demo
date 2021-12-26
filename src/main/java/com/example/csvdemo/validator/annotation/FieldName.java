@@ -12,7 +12,7 @@ import org.springframework.core.annotation.AliasFor;
 @Target(FIELD)
 @Retention(RUNTIME)
 @Documented
-@AdditionalValidateParam(name = "fieldName", value = "")
+@AdditionalValidateParam(name = "fieldName")
 public @interface FieldName {
 
   @AliasFor(annotation = AdditionalValidateParam.class, attribute = "value")

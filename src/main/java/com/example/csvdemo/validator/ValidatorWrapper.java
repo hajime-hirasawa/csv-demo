@@ -48,19 +48,8 @@ public class ValidatorWrapper implements Validator {
     Set<ConstraintViolation<T>> error = validator.validate(object, groups);
     return error.stream()
         .map(v -> (ConstraintViolationImpl<T>) v)
-        .map(v -> ConstraintViolationImpl.forBeanValidation(
-            v.getMessageTemplate(),
-            v.getMessageParameters(),
-            v.getExpressionVariables(),
-            resolveTokens(v),
-            v.getRootBeanClass(),
-            v.getRootBean(),
-            v.getLeafBean(),
-            v.getInvalidValue(),
-            v.getPropertyPath(),
-            v.getConstraintDescriptor(),
-            v.getDynamicPayload(object.getClass())
-        )).collect(Collectors.toSet());
+        .map(v -> new ConstraintViolationWrapper<>(v, resolveTokens(v)))
+        .collect(Collectors.toSet());
   }
 
   /**
