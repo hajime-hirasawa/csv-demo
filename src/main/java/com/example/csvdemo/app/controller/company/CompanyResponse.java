@@ -1,5 +1,8 @@
 package com.example.csvdemo.app.controller.company;
 
-public class CompanyResponse {
+import lombok.Data;
 
+@Data
+public class CompanyResponse {
+  String companyCode;
 }
