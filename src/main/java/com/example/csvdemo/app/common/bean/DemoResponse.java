@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class DemoResponse<T> {
 
-  private String resultCode = "0";
+  private String resultCode = "00";
 
   private List<String> messages;
 

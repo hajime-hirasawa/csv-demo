@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import com.example.csvdemo.app.common.aop.DemoRestControllerAdvice;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,12 +33,13 @@ public class CompanyRestControllerTest {
   private final ObjectMapper mapper = new ObjectMapper();
 
   @Autowired
-  public CompanyRestControllerTest(CompanyRestController target, Validator validator) {
+  public CompanyRestControllerTest(CompanyRestController target, Validator validator, DemoRestControllerAdvice controllerAdvice) {
     mockMvc = MockMvcBuilders.standaloneSetup(target)
         .addFilter((request, response, chain) -> {
           response.setCharacterEncoding(StandardCharsets.UTF_8.name());
           chain.doFilter(request, response);
         })
+        .setControllerAdvice(controllerAdvice)
         .setValidator(validator)
         .build();
   }
@@ -49,7 +51,14 @@ public class CompanyRestControllerTest {
     jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
         "requestTest.csv"));
-    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart)).andDo(print());
+    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
+        .andDo(print())
+        .andExpect(ResultMatcher.matchAll(
+            jsonPath("resultCode").value("01"),
+            jsonPath("messages").isArray(),
+            jsonPath("messages").value("更新者名は必須項目です。"),
+            jsonPath("result").isEmpty()
+        ));
   }
 
   @Test
@@ -60,7 +69,14 @@ public class CompanyRestControllerTest {
     jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
         "requestTest.csv"));
-    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart)).andDo(print());
+    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
+        .andDo(print())
+        .andExpect(ResultMatcher.matchAll(
+            jsonPath("resultCode").value("01"),
+            jsonPath("messages").isArray(),
+            jsonPath("messages").value("更新者名は必須項目です。"),
+            jsonPath("result").isEmpty()
+        ));
   }
 
   @Test
@@ -71,24 +87,19 @@ public class CompanyRestControllerTest {
     jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
         "requestTest.csv"));
-    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart)).andDo(print());
+    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
+        .andDo(print())
+        .andExpect(ResultMatcher.matchAll(
+            jsonPath("resultCode").value("00"),
+            jsonPath("messages").isEmpty(),
+            jsonPath("result").isEmpty()
+        ));
   }
 
   @Test
   public void insertCompany_request_editor_max_size() throws Exception {
     CompanyRequest request = new CompanyRequest();
-    request.setEditor("0---|----#1---|----#2---|----#3---|----#4---|----#5---|----#");
-    MockPart jsonPart = new MockPart("json", mapper.writeValueAsBytes(request));
-    jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-    MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
-        "requestTest.csv"));
-    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart)).andDo(print());
-  }
-
-  @Test
-  public void insertCompany_request_editor_max_size_over() throws Exception {
-    CompanyRequest request = new CompanyRequest();
-    request.setEditor("0---|----#1---|----#2---|----#3---|----#4---|----#5---|----#6");
+    request.setEditor("0---|----#1---|----#2---|----#3---|----#4---|----#");
     MockPart jsonPart = new MockPart("json", mapper.writeValueAsBytes(request));
     jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
@@ -96,9 +107,26 @@ public class CompanyRestControllerTest {
     mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
         .andDo(print())
         .andExpect(ResultMatcher.matchAll(
-            jsonPath("resultCode").value("99"),
+            jsonPath("resultCode").value("00"),
+            jsonPath("messages").isEmpty(),
+            jsonPath("result").isEmpty()
+        ));
+  }
+
+  @Test
+  public void insertCompany_request_editor_max_size_over() throws Exception {
+    CompanyRequest request = new CompanyRequest();
+    request.setEditor("0---|----#1---|----#2---|----#3---|----#4---|----#5");
+    MockPart jsonPart = new MockPart("json", mapper.writeValueAsBytes(request));
+    jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
+        "requestTest.csv"));
+    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
+        .andDo(print())
+        .andExpect(ResultMatcher.matchAll(
+            jsonPath("resultCode").value("01"),
             jsonPath("messages").isArray(),
-            jsonPath("messages").value("0~50で入力してください。"),
+            jsonPath("messages").value("更新者名は0~50で入力してください。"),
             jsonPath("result").isEmpty()
             ));
   }

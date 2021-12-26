@@ -1,7 +1,10 @@
 package com.example.csvdemo.config;
 
+import com.example.csvdemo.validator.CustomHibernateValidator;
+import java.util.Collections;
 import java.util.Map;
 import javax.validation.Validator;
+import org.hibernate.validator.HibernateValidator;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.context.MessageSource;
@@ -29,6 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
   public LocalValidatorFactoryBean validator() {
     LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
     bean.setValidationMessageSource(messageSource());
+    bean.setValidationProviderResolver(() -> Collections.singletonList(new CustomHibernateValidator()));
     return bean;
   }
 
