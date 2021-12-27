@@ -1,6 +1,7 @@
 package com.example.csvdemo.app.service.company;
 
 import com.example.csvdemo.app.controller.company.CompanyRequest;
+import com.example.csvdemo.app.service.company.CompanyCsv.CSV_COLUMN;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,6 +42,10 @@ public class CompanyService {
 
 
   public CsvReadResult<String> readCsv(CompanyRequest request, MultipartFile csvFile) {
+
+    // 単純なCSVであればCsvBeanReaderが楽だが、今回はCSV内で長さが変わるのでCsvListReader
+
+    // SJIS + CsvPreference.STANDARD_PREFERENCE でEXCELで作成したCSVに対応
     try (InputStream is = csvFile.getInputStream();
         InputStreamReader isr = new InputStreamReader(is, Charset.forName("Shift_JIS"));
         ICsvListReader reader = new CsvListReader(isr, CsvPreference.STANDARD_PREFERENCE)) {
@@ -57,20 +62,31 @@ public class CompanyService {
           return new CsvReadResult<>(null, Collections.singletonList("[" + lineNumber + "行目] empty row."));
         }
 
+        // レコード種別を見て判定
         switch (row.get(0)) {
           case "CP":
+            if (row.size() != (CompanyCsv.CSV_COLUMN.values().length) + 1) {
+              warns.add("[" + lineNumber + "行目] カラム長不正のためスキップ");
+              break;
+            }
             CompanyCsv companyCsv = new CompanyCsv(row);
-            addAllWarns(companyCsv, reader.getLineNumber(), warns);
+            addAllWarns(companyCsv, lineNumber, warns);
             companyCsvList.add(companyCsv);
             break;
           case "ST":
+            if (row.size() != (StoreCsv.CSV_COLUMN.values().length) + 1) {
+              warns.add("[" + lineNumber + "行目] カラム長不正のためスキップ");
+            }
             StoreCsv storeCsv = new StoreCsv(row);
-            addAllWarns(storeCsv, reader.getLineNumber(), warns);
+            addAllWarns(storeCsv, lineNumber, warns);
             storeCsvList.add(storeCsv);
             break;
           case "WT":
+            if (row.size() != (WorkTimeCsv.CSV_COLUMN.values().length) + 1) {
+              warns.add("[" + lineNumber + "行目] カラム長不正のためスキップ");
+            }
             WorkTimeCsv workTimeCsv = new WorkTimeCsv(row);
-            addAllWarns(workTimeCsv, reader.getLineNumber(), warns);
+            addAllWarns(workTimeCsv, lineNumber, warns);
             workTimeCsvList.add(workTimeCsv);
             break;
           default:
@@ -96,11 +112,13 @@ public class CompanyService {
     }
   }
 
-  private void addAllWarns(Object target, int lineNumber, List<String> warns) {
+  private void addAllWarns(Object target, String lineNumber, List<String> warns) {
+    // 本当はSuperCsvのバリデーションを使いたいが
+    // 今回のケースでは使用不可のためSpringのバリデータを使用する。
     Errors error = new BeanPropertyBindingResult(target, target.getClass().getSimpleName());
     validator.validate(target, error);
     warns.addAll(error.getAllErrors().stream()
-        .map(err -> String.join("", "[", Integer.toString(lineNumber) , "行目]", err.getDefaultMessage()))
+        .map(err -> String.join("", "[", lineNumber , "行目]", err.getDefaultMessage()))
         .collect(Collectors.toList()));
   }
 }
