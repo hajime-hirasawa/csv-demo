@@ -3,6 +3,9 @@ package com.example.csvdemo.app.controller.company;
 import com.example.csvdemo.app.common.annotation.ApiName;
 import com.example.csvdemo.app.common.bean.DemoResponse;
 import com.example.csvdemo.app.service.company.CompanyService;
+import com.example.csvdemo.app.service.company.CsvReadResult;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +50,15 @@ public class CompanyRestController {
       @RequestPart("file") MultipartFile file,
       @RequestPart("json") @Validated CompanyRequest request) {
 
-    return new DemoResponse<>();
+    CsvReadResult<String> result = service.readCsv(request, file);
+
+    if (result.getWarn().isEmpty()) {
+      CompanyResponse response = new CompanyResponse();
+      response.setReadDataJson(result.getResult());
+      return DemoResponse.asSuccess(response, null);
+    }
+
+    return DemoResponse.asError("02", result.getWarn());
   }
 
 }

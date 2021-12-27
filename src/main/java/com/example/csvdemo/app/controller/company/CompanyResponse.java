@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class CompanyResponse {
-  String companyCode;
+  String readDataJson;
 }

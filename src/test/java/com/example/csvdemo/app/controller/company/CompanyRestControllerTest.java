@@ -91,8 +91,7 @@ public class CompanyRestControllerTest {
         .andDo(print())
         .andExpect(ResultMatcher.matchAll(
             jsonPath("resultCode").value("00"),
-            jsonPath("messages").isEmpty(),
-            jsonPath("result").isEmpty()
+            jsonPath("messages").isEmpty()
         ));
   }
 
@@ -108,8 +107,7 @@ public class CompanyRestControllerTest {
         .andDo(print())
         .andExpect(ResultMatcher.matchAll(
             jsonPath("resultCode").value("00"),
-            jsonPath("messages").isEmpty(),
-            jsonPath("result").isEmpty()
+            jsonPath("messages").isEmpty()
         ));
   }
 
@@ -129,6 +127,23 @@ public class CompanyRestControllerTest {
             jsonPath("messages").value("更新者名は0~50で入力してください。"),
             jsonPath("result").isEmpty()
             ));
+  }
+
+  @Test
+  public void insertCompany_request_csv_over_length() throws Exception {
+    CompanyRequest request = new CompanyRequest();
+    request.setEditor("0---|----#1---|----#2---|----#3---|----#4---|----#");
+    MockPart jsonPart = new MockPart("json", mapper.writeValueAsBytes(request));
+    jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    MockPart filePart = new MockPart("file", "file.csv", getByteFromResource(
+        "request_over_length.csv"));
+    mockMvc.perform(multipart("/company/insert").part(jsonPart).part(filePart))
+        .andDo(print())
+        .andExpect(ResultMatcher.matchAll(
+            jsonPath("resultCode").value("01"),
+            jsonPath("messages").isArray(),
+            jsonPath("result").isEmpty()
+        ));
   }
 
   private byte[] getByteFromResource(String fileName) {

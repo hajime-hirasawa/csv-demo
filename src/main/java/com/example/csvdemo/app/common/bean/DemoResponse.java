@@ -12,6 +12,13 @@ public class DemoResponse<T> {
 
   private T result;
 
+  public static<T> DemoResponse<T> asSuccess(T result, List<String> messages) {
+    DemoResponse<T> response = new DemoResponse<>();
+    response.setResult(result);
+    response.setMessages(messages);
+    return response;
+  }
+
   public static<T> DemoResponse<T> asError(String resultCode, List<String> messages) {
     DemoResponse<T> response = new DemoResponse<>();
     response.setResultCode(resultCode);
